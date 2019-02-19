@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Visualize your fitbod</title>
+  <meta charset="UTF-8">
+  <link href=https://stitches.hyperyolo.com/public/stitches.css rel="stylesheet">
+  <link href=https://fonts.googleapis.com/css?family=Muli:300,400,600,700,800,900 rel="stylesheet">
+  <link rel="stylesheet" href=https://use.fontawesome.com/releases/v5.6.3/css/all.css integrity=sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/
+    crossorigin="anonymous">
+
+</head>
+
+<body>
+
+  <section class="font-sans flex flex-col lg:flex-row">
+    <div class="w-full flex flex-col items-center justify-center text-center p-8">
+      <h1 class="my-4 font-normal">Load your data</h1>
+      <p class="leading-normal mb-4 w-2/3 text-grey-dark">      
+          <input type="file" id="csv-file" />
+          Units
+          <select id="units">
+            <option  selected value="kg">Kg</option>
+            <option  value="lbs">Lbs</option>
+          </select>
+      </p>      
+      <p class="leading-normal mb-4 text-xs text-grey-dark">Export and upload your fitbod_workout.csv file.</p>
+      <p class="leading-normal mb-4 text-xs text-grey-dark">No data is stored - nothing is logged, this all happens within your browser.</p>
+    </div>
+  </section>
+  <div id="results" class="hidden">
+    <section class="font-sans container m-auto text-center py-8">
+      <label for="weightLifted" class="uppercase tracking-wide font-bold text-grey-dark">Total Weight Lifted</label>
+      <h1 id="weightLifted" class="mt-2 mb-4 font-medium max-w-sm m-auto"></h1>
+      <hr class="border-b w-8 m-auto my-6">
+      <div class="flex flex-wrap justify-between items-start">
+        <div class="w-full sm:w-1/2 md:w-1/3 flex flex-col items-center justify-center p-4">
+          <div class="w-14 h-14 rounded-full mr-4 bg-grey-light" alt=""></div>
+          <h2 id="uniqueExercises" class="my-4 font-medium"></h2>
+          <p class="leading-normal mb-4 text-grey-dark">Unique Exericses</p>
+        </div>
+        <div class="w-full sm:w-1/2 md:w-1/3 flex flex-col items-center justify-center p-4">
+          <div class="w-14 h-14 rounded-full mr-4 bg-grey-light" alt=""></div>
+          <h2 id="topExercisePerformed" class="my-4 font-medium"></h2>
+          <p class="leading-normal mb-4 text-grey-dark">Performed Most Often</p>
+        </div>
+        <div class="w-full sm:w-1/2 md:w-1/3 flex flex-col items-center justify-center p-4">
+          <div class="w-14 h-14 rounded-full mr-4 bg-grey-light" alt=""></div>
+          <h2 id="topExerciseWeightMoved" class="my-4 font-medium"></h2>
+          <p id="topExerciseWeightMovedDesc" class="leading-normal mb-4 text-grey-dark"></p>
+        </div>
+       
+      </div>
+    </section>
+    <section class="bg-white py-4 font-sans">
+      <div class="container max-w-xl m-auto flex flex-wrap md:flex-no-wrap items-center justify-center">
+        <h1 class="w-full md:w-1/4 font-medium tracking-normal mb-4 md:mb-0">Important<br>Stats</h1>
+        <div class="w-1/3 md:w-1/4">
+          <span  class="text-xs inline-block mr-2 uppercase text-grey-darkest tracking-wide">Since you started</span>
+          <h3 id="daysSinceStarted" class="inline-block"></h3>
+        </div>
+        <div class="w-1/5 md:w-1/5">
+          
+        </div>
+        <div class="w-1/3 md:w-1/4">
+          <span class="text-xs inline-block mr-2 uppercase text-grey-darkest tracking-wide">That's about</span>
+          <h3 id="minutesSinceStarted" class="inline-block"></h3>
+        </div>
+      </div>
+    </section>   
+
+    <footer class="font-sans bg-black text-white py-8 px-4">
+      <div class="mx-auto max-w-xl overflow-hidden flex justify-between items-center">
+        <ul class="text-sm text-grey-dark list-reset flex items-center">         
+          <li><a href="https://www.twitter.com/ryanmcdonough" class="inline-block py-2 px-3 text-grey hover:text-grey-light no-underline">Built by @ryanmcdonough</a></li>
+          <li><a href="https://www.fitbod.me/" class="inline-block py-2 px-3 text-grey hover:text-grey-light no-underline">Fitbod is Copyright ©2018 Fitbod, Inc. All Rights Reserved.</a></li>
+        </ul>
+
+      </div>
+    </footer>
+  </div>
+
+</body>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.6.3/papaparse.min.js" integrity="sha256-1KCNEBmmUm8Oo4IOlg7ZnbFjBZXxCa9bILP7eGDqYOY="
+  crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+
+<script>
+  function handleFileSelect(evt) {
+    if (!(evt.target && evt.target.files && evt.target.files[0])) {
+      return;
+    }
+    Papa.parse(evt.target.files[0], {
+      header: true,
+      dynamicTyping: true,
+      complete: function (results) {
+        renderDataset(results);
+      }
+    });
+  }
+
+
+  function renderDataset(dataset) {
+    //Really quick put together for simple data displaying, 1 hour job.
+    //Unique Exercises
+
+    var unit = $("#units").val();
+
+    var totalWeight = 0;
+    var totalUniqueExercises = 0;
+
+    var length = dataset.data.length;
+
+    var firstDate = moment(dataset.data[0].Date);
+    var lastDate = moment(dataset.data[length - 1].Date);
+
+    var daysSinceStartedAmount = firstDate.diff(lastDate, 'days');
+
+    $.each(dataset.data, function (index, item) {
+      
+      if (item.Weight != 0) {
+        var additionalWeight = item.Weight * item.Reps;
+        totalWeight += additionalWeight;
+      }
+    });
+
+    //Top exercises
+    const groupBy = (arr, k) => arr.reduce((r, c) => (r[c[k]] = [...r[c[k]] || [], c], r), {});
+    const groupWith = (arr, k, fn = () => true) =>
+      arr.reduce((r, c) => (fn(c[k]) ? r[c[k]] = [...r[c[k]] || [], c] : null, r), {});
+
+    var groupedData = groupBy(dataset.data, 'Exercise');
+    var topExercise;
+    var topExerciseCount = 0;
+    var topExerciseWeight = 0;
+
+    for (var key in groupedData) {
+        totalUniqueExercises++;
+
+        if(groupedData[key].length > topExerciseCount){ 
+            topExerciseCount = groupedData[key].length;
+            topExercise = key;
+        }
+    }
+
+    $.each(groupedData[topExercise], function (index, item) {
+      if (item.Weight != 0) {
+        var additionalWeight = item.Weight * item.Reps;
+        topExerciseWeight += additionalWeight;
+      }
+    });
+
+    $('#weightLifted').text(totalWeight + " " + unit);
+    $('#topExercisePerformed').text(topExercise);
+    $('#uniqueExercises').text(totalUniqueExercises);
+    $('#topExercisePerformed').text(topExercise);
+    $('#topExerciseWeightMoved').text(topExerciseWeight + " " + unit);
+    $('#topExerciseWeightMovedDesc').text("Moved during " + topExercise);
+    $('#daysSinceStarted').text(daysSinceStartedAmount + " days ago");
+    $('#minutesSinceStarted').text(daysSinceStartedAmount * 1800 + " minutes of getting better")
+
+    console.log(groupedData);
+
+    //Show the content...
+    $("#results").removeClass("hidden");
+
+  }
+
+  $(function () {
+    $("#csv-file").change(handleFileSelect);
+  });
+</script>
+
+</html>
